@@ -15,6 +15,9 @@ long speed = 0;
 
 bool finished = false;
 int locator();
+int pid(int setpoint, int measure,int P,int I,int D);
+void counter();
+void powercontrol();
 void setup()
 {
     attachInterrupt(digitalPinToInterrupt(hallpin), counter, RISING);
@@ -25,7 +28,8 @@ void loop()
 {
     static int lineloc = 0;
     lineloc = locator();
-    myservo.write(pid(0, lineloc));
+    myservo.write(pid(0, lineloc,1,0,0));
+    powercontrol();
 }
 int locator()
 {
@@ -37,6 +41,7 @@ int locator()
     if ((bright1 + bright2 + bright3 + bright4) > threshold)
     {
         finished = true;
+        return 0;
     }
     else
     {
@@ -47,18 +52,16 @@ int locator()
         return location;
     }
 }
-int pid(int setpoint, int measure)
+int pid(int setpoint, int measure,int P,int I,int D)
 {
-    const int P = 1;
-    const int I = 0;
-    const int D = 0;
     int preverror = 0;
     int prevtime = 0;
+    static int integral = 0;
     long time = millis();
     long delta = prevtime - time;
     int error = setpoint - measure;
     int proportional = error;
-    int integral = integral + error * delta;
+    integral = integral + error * delta;
     int derivative = (error - preverror) / delta;
     int result = P * proportional + I * integral + D * derivative;
     preverror = error;
@@ -73,9 +76,9 @@ void counter()
     speed = (1 / deltatime) * 27.018;
     prevt = time;
 }
-void throttle()
+void powercontrol()
 {
-    int setspeed=0;
+    int setspeed = 0;
     if (digitalRead(tiltswitch))
     {
         setspeed = lowspeed;
@@ -84,6 +87,14 @@ void throttle()
     {
         setspeed = highspeed;
     }
-
-    pid(setspeed, speed);
+    if (setspeed < 1)
+    {
+        digitalWrite(enamotor, LOW);
+    }
+    else
+    {
+       digitalWrite(enamotor,HIGH);
+    }
+    
+    analogWrite( throttle , pid(setspeed, speed,1,0,0));
 }
