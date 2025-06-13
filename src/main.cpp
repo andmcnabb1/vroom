@@ -5,8 +5,8 @@ Servo myservo;
 const int in_dist = 11;
 const int out_dist = in_dist + 25;
 const int irled = 2;
-const int threshold = 550;
-const int stopthreshold = 400;
+const int threshold = 600;
+const int stopthreshold = 670;
 const int hallpin = 3;
 const int enamotor = 4;
 const int throttle = 5;
@@ -17,7 +17,7 @@ const int steeringoffset = 0;
 const int trigPin = 6;
 const int echoPin = 7;
 const int buttonpin = 12;
-int distance = 0;
+int distance = 100;
 unsigned int pingSpeed = 100;
 unsigned long pingTimer = 0;
 NewPing sonar(trigPin, echoPin, 600);
@@ -35,6 +35,7 @@ void setup()
     pinMode(3, OUTPUT);
     pinMode(buttonpin, INPUT_PULLUP);
     myservo.attach(2);
+    Serial.begin(9600);
     digitalWrite(3, HIGH);
     digitalWrite(4, HIGH);
     pingTimer = millis();
@@ -44,13 +45,14 @@ void loop()
     static int lineloc = 0;
 
     lineloc = locator();
-    myservo.write(pid(0, lineloc, 13, 0, 0) + 90 + steeringoffset);
-    delay(10);
-    if (millis() >= pingTimer)
-    {    
+    myservo.write(pid(0, lineloc, 7, 0, 0) + 90 + steeringoffset);
+    /*if (millis() >= pingTimer)
+    {
         pingTimer += pingSpeed;
         sonar.ping_timer(echoCheck);
-    }
+    }*/
+    //distance=100; //this deactivates the ultrasonic sensor
+    Serial.println(distance);
     powercontrol(distance);
     butti = digitalRead(buttonpin);
     if (!butti)
@@ -90,7 +92,7 @@ int locator()
     if ((bright1 < stopthreshold) && (bright2 < stopthreshold) && (bright3 < stopthreshold) && (bright4 < stopthreshold))
     {
         finished = true;
-        //delay(1) use if it doesn't stop correctly
+        //delay(200); // use if it doesn't stop correctly
     }
     return location;
 }
@@ -135,19 +137,19 @@ int pid(int setpoint, int measure, int P, int I, int D)
 void powercontrol(int distance)
 {
 
-    if ((!finished && distance > 30) && butti)
+    if ((!finished) && butti)
     {
-        analogWrite(throttle, 20);
+        analogWrite(throttle, 47);
     }
     else
     {
         analogWrite(throttle, 0);
     }
 }
-void echoCheck()
+/*void echoCheck()
 {
     if (sonar.check_timer())
     {
         distance = sonar.ping_result / US_ROUNDTRIP_CM;
     }
-}
+} */
